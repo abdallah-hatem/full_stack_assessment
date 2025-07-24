@@ -32,16 +32,6 @@ const SignIn: React.FC = () => {
               loadingButton={loading}
               layout="vertical"
             />
-
-            {/* Forgot Password Link */}
-            <div className="mt-4 text-center">
-              <a
-                href="#"
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200"
-              >
-                Forgot your password?
-              </a>
-            </div>
           </div>
 
           {/* Footer Section */}
@@ -51,10 +41,12 @@ const SignIn: React.FC = () => {
                 <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">Don't have an account?</span>
+                <span className="px-4 bg-white text-gray-500">
+                  Don't have an account?
+                </span>
               </div>
             </div>
-            
+
             <div className="mt-4 text-center">
               <Link
                 to="/signup"
@@ -77,4 +69,4 @@ const SignIn: React.FC = () => {
   );
 };
 
-export default SignIn; 
+export default SignIn;

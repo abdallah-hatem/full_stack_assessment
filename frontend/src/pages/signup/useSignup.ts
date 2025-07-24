@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { formFieldsType } from "../../components/form/formComp";
 import { validatePassword } from "../../utils/validators";
+import { REGISTER } from "../../apis";
+import type { RegisterData } from "../../types/authTypes";
+import { setCookie } from "../../services/cookies";
 
 interface SignUpFormData {
   email: string;
@@ -59,13 +62,16 @@ export const useSignup = () => {
   const onFinish = (data: SignUpFormData) => {
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Sign up data:", data);
-      setLoading(false);
-      // Navigate to application page after successful signup
-      navigate("/app");
-    }, 1000);
+    REGISTER({ data: data as RegisterData })
+      .then((response) => {
+        if (!response.success) return;
+
+        // Navigate to application page after successful signup
+        navigate("/signin");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return {

@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { formFieldsType } from "../../components/form/formComp";
 import { validateEmail } from "../../utils/validators";
+import { LOGIN } from "../../apis";
+import type { LoginData } from "../../types/authTypes";
+import { setCookie } from "../../services/cookies";
 
 interface SignInFormData {
   email: string;
@@ -18,9 +21,7 @@ export const useSignin = () => {
       type: "input",
       label: "Email",
       required: true,
-      rules: [
-        { validator: validateEmail }
-      ],
+      rules: [{ validator: validateEmail }],
       innerProps: {
         placeholder: "Enter your email",
         type: "email",
@@ -41,14 +42,22 @@ export const useSignin = () => {
 
   const onFinish = (data: SignInFormData) => {
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Sign in data:", data);
-      setLoading(false);
-      // Navigate to application page after successful signin
-      navigate("/app");
-    }, 1000);
+
+    LOGIN({ data: data as LoginData })
+      .then((response) => {
+        if (!response.success) return;
+
+        // Store access_token as auth_token for apiInstance
+        if (response.data?.access_token) {
+          setCookie("auth_token", response.data.access_token);
+        }
+
+        // Navigate to application page after successful signin
+        navigate("/app");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return {
@@ -56,4 +65,4 @@ export const useSignin = () => {
     formFields,
     onFinish,
   };
-}; 
+};
