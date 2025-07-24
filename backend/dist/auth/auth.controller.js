@@ -54,8 +54,8 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
-    (0, common_1.Get)('me'),
     (0, auth_decorator_1.Auth)(),
+    (0, common_1.Get)('me'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

@@ -1,17 +1,16 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, Matches } from 'class-validator';
+import {
+  ValidateEmail,
+  ValidatePassword,
+  ValidateName,
+} from '../../common/decorators/validation.decorators';
 
 export class CreateUserDto {
-  @IsString()
+  @ValidateName(3)
   name: string;
 
-  @IsNotEmpty()
-  @IsEmail()
+  @ValidateEmail()
   email: string;
 
-  @IsNotEmpty()
-  @MinLength(8)
-  @Matches(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
-    message: 'Password must be at least 8 characters long and contain at least one letter, one number, and one special character (@$!%*?&)',
-  })
+  @ValidatePassword()
   password: string;
 }

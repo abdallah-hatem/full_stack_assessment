@@ -3,11 +3,8 @@ import { DatabaseService } from './database/database.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ConfigModule } from '@nestjs/config';
 import databaseConfig from './config/database.config';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 @Module({
   imports: [
@@ -29,6 +26,10 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
     // {
     //   provide: APP_GUARD,
     //   useClass: JwtAuthGuard,
+    // },
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: HttpExceptionFilter,
     // },
   ],
 })

@@ -1,10 +1,12 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import {
+  ValidateEmail,
+  ValidatePassword,
+} from '../../common/decorators/validation.decorators';
 
 export class LoginDto {
-  @IsNotEmpty()
-  @IsEmail()
+  @ValidateEmail()
   email: string;
 
-  @IsNotEmpty()
+  @ValidatePassword()
   password: string;
-} 
+}

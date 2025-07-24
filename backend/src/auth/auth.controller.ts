@@ -2,7 +2,6 @@ import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { Public } from './decorators/public.decorator';
 import { ResponseUtil } from 'src/common/utils/response.util';
 import { Request } from 'express';
 import { Auth } from './decorators/auth.decorator';
@@ -33,8 +32,8 @@ export class AuthController {
     );
   }
 
-  @Get('me')
   @Auth()
+  @Get('me')
   async me(@Req() req: Request) {
     return ResponseUtil.success(
       [],

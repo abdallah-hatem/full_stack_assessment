@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateUserDto = void 0;
-const class_validator_1 = require("class-validator");
+const validation_decorators_1 = require("../../common/decorators/validation.decorators");
 class CreateUserDto {
     name;
     email;
@@ -18,20 +18,15 @@ class CreateUserDto {
 }
 exports.CreateUserDto = CreateUserDto;
 __decorate([
-    (0, class_validator_1.IsString)(),
+    (0, validation_decorators_1.ValidateName)(3),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "name", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsEmail)(),
+    (0, validation_decorators_1.ValidateEmail)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "email", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.MinLength)(8),
-    (0, class_validator_1.Matches)(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
-        message: 'Password must be at least 8 characters long and contain at least one letter, one number, and one special character (@$!%*?&)',
-    }),
+    (0, validation_decorators_1.ValidatePassword)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "password", void 0);
 //# sourceMappingURL=create-user.dto.js.map
