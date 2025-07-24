@@ -40,6 +40,7 @@ const apiService = {
     params = {},
     skipSuccessMessage = true,
     skipErrorMessage = true,
+    skipUnauthorized = false,
   }: {
     resource: string;
     data?: any;
@@ -47,11 +48,13 @@ const apiService = {
     params?: any;
     skipSuccessMessage?: boolean;
     skipErrorMessage?: boolean;
+    skipUnauthorized?: boolean;
   }) => {
     try {
       const response = await api.post(`/${resource}`, data, {
         ...config,
         params,
+        skipUnauthorized,
       });
       return response.data;
     } catch (error: any) {

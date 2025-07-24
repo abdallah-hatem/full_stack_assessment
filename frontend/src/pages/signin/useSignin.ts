@@ -45,6 +45,8 @@ export const useSignin = () => {
 
     LOGIN({ data: data as LoginData })
       .then((response) => {
+        console.log("response", response);
+
         if (!response.success) return;
 
         // Store access_token as auth_token for apiInstance

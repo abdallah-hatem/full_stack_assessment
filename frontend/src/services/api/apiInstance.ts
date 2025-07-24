@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getCookie } from "../cookies";
+import { getCookie, removeCookie } from "../cookies";
 import { toast } from "react-toastify";
 
 declare module "axios" {
@@ -46,14 +46,23 @@ api.interceptors.response.use(
       !error.config?.skipUnauthorized
     ) {
       // toast.error("Unauthorized");
+      removeCookie("auth_token");
+      window.location.href = "/login";
     }
 
     // Always include error info in the response for client to handle
     if (error.response) {
-      toast.error(error.response?.data?.message || "An error occurred");
+      const backendMessage = error.response?.data?.message;
+
+      // If message is an array (validation errors), join them with line breaks
+      const errorMessage = Array.isArray(backendMessage)
+        ? backendMessage.join("\n")
+        : backendMessage || "An error occurred";
+
+      toast.error(errorMessage);
 
       error.response.serverError = {
-        message: error.response?.data?.message || "An error occurred",
+        message: errorMessage,
         status: error.response.status,
       };
     }
