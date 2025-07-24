@@ -7,6 +7,7 @@ export const LOGIN = async ({ data }: { data: LoginData }) => {
     resource: `auth/login`,
     data,
     skipUnauthorized: true,
+    skipSuccessMessage: false,
   });
 };
 
@@ -16,6 +17,7 @@ export const REGISTER = async ({ data }: { data: RegisterData }) => {
     resource: `auth/register`,
     data,
     skipUnauthorized: true,
+    skipSuccessMessage: false,
   });
 };
 

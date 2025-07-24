@@ -55,6 +55,8 @@ const apiService = {
         ...config,
         params,
         skipUnauthorized,
+        skipSuccessMessage,
+        skipErrorMessage,
       });
       return response.data;
     } catch (error: any) {

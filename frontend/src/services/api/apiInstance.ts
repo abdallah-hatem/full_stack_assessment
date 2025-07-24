@@ -36,6 +36,14 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
+    if (response.config.skipSuccessMessage) {
+      return response;
+    }
+
+    if (response.data.success) {
+      toast.success(response.data.message);
+    }
+
     return response;
   },
   (error) => {
