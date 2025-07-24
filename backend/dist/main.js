@@ -4,7 +4,10 @@ const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const app_module_1 = require("./app.module");
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const logger = new common_1.Logger('Bootstrap');
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, {
+        logger: ['log', 'error', 'warn', 'debug', 'verbose'],
+    });
     app.enableCors({
         origin: '*',
         credentials: true,
@@ -14,7 +17,11 @@ async function bootstrap() {
         forbidNonWhitelisted: true,
         transform: true,
     }));
-    await app.listen(process.env.PORT ?? 3000);
+    const port = process.env.PORT ?? 3000;
+    await app.listen(port);
+    logger.log(`🚀 Application is running on: http://localhost:${port}`);
+    logger.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.log(`📊 Logging enabled: HTTP requests, Auth, Database, Errors`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

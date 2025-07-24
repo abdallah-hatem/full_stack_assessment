@@ -1,13 +1,17 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const logger = new Logger('Bootstrap');
+
+  const app = await NestFactory.create(AppModule, {
+    logger: ['log', 'error', 'warn', 'debug', 'verbose'],
+  });
 
   // Enable CORS for frontend requests
   app.enableCors({
-    origin: '*', // Vite dev server and any other origins
+    origin: '*',
     credentials: true,
   });
 
@@ -20,6 +24,11 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+
+  logger.log(`🚀 Application is running on: http://localhost:${port}`);
+  logger.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.log(`📊 Logging enabled: HTTP requests, Auth, Database, Errors`);
 }
 bootstrap();

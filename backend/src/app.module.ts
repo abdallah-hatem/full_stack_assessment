@@ -1,10 +1,15 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { DatabaseService } from './database/database.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ConfigModule } from '@nestjs/config';
 import databaseConfig from './config/database.config';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { LoggerService } from './common/services/logger.service';
 
 @Module({
   imports: [
@@ -19,10 +24,11 @@ import databaseConfig from './config/database.config';
   controllers: [],
   providers: [
     DatabaseService,
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: ResponseInterceptor,
-    // },
+    LoggerService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
     // {
     //   provide: APP_GUARD,
     //   useClass: JwtAuthGuard,
@@ -33,4 +39,8 @@ import databaseConfig from './config/database.config';
     // },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}

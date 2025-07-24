@@ -15,6 +15,7 @@ const auth_service_1 = require("./auth.service");
 const auth_controller_1 = require("./auth.controller");
 const jwt_strategy_1 = require("./strategies/jwt.strategy");
 const users_module_1 = require("../users/users.module");
+const logger_service_1 = require("../common/services/logger.service");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -35,7 +36,7 @@ exports.AuthModule = AuthModule = __decorate([
             }),
         ],
         controllers: [auth_controller_1.AuthController],
-        providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy],
+        providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy, logger_service_1.LoggerService],
         exports: [auth_service_1.AuthService],
     })
 ], AuthModule);
