@@ -1,0 +1,17 @@
+# Environment variables - Copy this to .env file
+
+# MongoDB Atlas (recommended for production and development)
+DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/nestjs_app?retryWrites=true&w=majority"
+
+# For local development with Docker (alternative)
+# DATABASE_URL="mongodb://nestjs_user:nestjs_password@localhost:27017/nestjs_app?authSource=nestjs_app"
+
+# For local MongoDB installation (alternative)
+# DATABASE_URL="mongodb://localhost:27017/nestjs_app"
+
+# JWT Configuration
+JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
+
+# Application
+NODE_ENV=development
+PORT=3000 
