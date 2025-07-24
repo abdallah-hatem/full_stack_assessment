@@ -4,6 +4,7 @@ import { UsersService } from 'src/users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { User } from 'src/users/entities/user.entity';
+import { Log, LogDebug, LogExtractors } from 'src/common/decorators/log.decorator';
 import { LoggerService } from 'src/common/services/logger.service';
 import * as bcrypt from 'bcryptjs';
 
@@ -20,99 +21,73 @@ export class AuthService {
     private readonly loggerService: LoggerService,
   ) {}
 
+  @Log({ 
+    action: 'register',
+    extractContext: {
+      fromArgs: LogExtractors.emailFromDto,
+      fromResult: (result: AuthResult) => ({
+        userId: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+      }),
+      fromError: LogExtractors.emailFromError,
+    },
+    messages: {
+      start: 'Registration attempt started',
+      success: 'User registered successfully',
+      error: 'Registration failed',
+    }
+  })
   async register(registerDto: RegisterDto): Promise<AuthResult> {
-    this.loggerService.logAuth('Registration attempt started', {
-      action: 'register',
-      metadata: { email: registerDto.email, name: registerDto.name }
-    });
+    const user = await this.usersService.create(registerDto);
+    const payload = { sub: user.id, email: user.email };
 
-    try {
-      const user = await this.usersService.create(registerDto);
-      const payload = { sub: user.id, email: user.email };
-
-      this.loggerService.logAuth('User registered successfully', {
-        userId: user.id,
-        action: 'register',
-        metadata: { email: user.email }
-      });
-
-      this.loggerService.logUserAction('register', user.id, 'user_account', {
-        email: user.email,
-        name: user.name
-      });
-
-      return {
-        access_token: this.jwtService.sign(payload),
-        user: this.excludePassword(user),
-      };
-    } catch (error) {
-      this.loggerService.logBusinessError('Registration failed', {
-        action: 'register',
-        metadata: { email: registerDto.email, error: error.message }
-      });
-      throw error;
-    }
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: this.excludePassword(user),
+    };
   }
 
+  @Log({ 
+    action: 'login',
+    extractContext: {
+      fromArgs: (args) => ({ email: args[0]?.email }),
+      fromResult: (result: AuthResult) => ({
+        userId: result.user.id,
+        email: result.user.email,
+      }),
+      fromError: (error, args) => ({
+        email: args[0]?.email,
+        errorMessage: error.message,
+      }),
+    },
+    messages: {
+      start: 'Login attempt started',
+      success: 'User logged in successfully',
+      error: 'Login failed',
+    }
+  })
   async login(loginDto: LoginDto): Promise<AuthResult> {
-    this.loggerService.logAuth('Login attempt started', {
-      action: 'login',
-      metadata: { email: loginDto.email }
-    });
+    const user = await this.validateUser(loginDto.email, loginDto.password);
 
-    try {
-      const user = await this.validateUser(loginDto.email, loginDto.password);
-
-      if (!user) {
-        this.loggerService.logValidation('Invalid credentials provided', {
-          action: 'login',
-          metadata: { email: loginDto.email }
-        });
-        throw new UnauthorizedException('Invalid email or password');
-      }
-
-      const payload = { sub: user.id, email: user.email };
-
-      this.loggerService.logAuth('User logged in successfully', {
-        userId: user.id,
-        action: 'login',
-        metadata: { email: user.email }
-      });
-
-      this.loggerService.logUserAction('login', user.id, 'user_session');
-
-      return {
-        access_token: this.jwtService.sign(payload),
-        user: this.excludePassword(user),
-      };
-    } catch (error) {
-      this.loggerService.logBusinessError('Login failed', {
-        action: 'login',
-        metadata: { email: loginDto.email, error: error.message }
-      });
-      throw error;
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
     }
+
+    const payload = { sub: user.id, email: user.email };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: this.excludePassword(user),
+    };
   }
 
+  @LogDebug('validate_user')
   async validateUser(email: string, password: string): Promise<User | null> {
-    this.loggerService.debug('Validating user credentials', {
-      action: 'validate_user',
-      metadata: { email }
-    });
-
     const user = await this.usersService.findByEmail(email);
     if (user && (await bcrypt.compare(password, user.password))) {
-      this.loggerService.debug('User credentials validated successfully', {
-        userId: user.id,
-        action: 'validate_user'
-      });
       return user;
     }
-
-    this.loggerService.debug('User credentials validation failed', {
-      action: 'validate_user',
-      metadata: { email }
-    });
     return null;
   }
 

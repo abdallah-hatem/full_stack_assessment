@@ -12,6 +12,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const user_repository_1 = require("./repositories/user.repository");
+const create_user_dto_1 = require("./dto/create-user.dto");
+const update_user_dto_1 = require("./dto/update-user.dto");
+const log_decorator_1 = require("../common/decorators/log.decorator");
 const logger_service_1 = require("../common/services/logger.service");
 const bcrypt = require("bcryptjs");
 let UsersService = class UsersService {
@@ -22,139 +25,150 @@ let UsersService = class UsersService {
         this.loggerService = loggerService;
     }
     async create(createUserDto) {
-        this.loggerService.logDatabase('Creating new user', {
-            action: 'create_user',
-            metadata: { email: createUserDto.email, name: createUserDto.name }
-        });
-        try {
-            const existingUser = await this.userRepository.findByEmail(createUserDto.email);
-            if (existingUser) {
-                this.loggerService.logValidation('User creation failed - email already exists', {
-                    action: 'create_user',
-                    metadata: { email: createUserDto.email }
-                });
-                throw new common_1.ConflictException('User with this email already exists');
-            }
-            const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-            const userData = {
-                ...createUserDto,
-                password: hashedPassword,
-            };
-            const user = await this.userRepository.create(userData);
-            this.loggerService.logDatabase('User created successfully', {
-                userId: user.id,
-                action: 'create_user',
-                metadata: { email: user.email }
-            });
-            return user;
+        const existingUser = await this.userRepository.findByEmail(createUserDto.email);
+        if (existingUser) {
+            throw new common_1.ConflictException('User with this email already exists');
         }
-        catch (error) {
-            this.loggerService.logSystemError('User creation failed', error, {
-                action: 'create_user',
-                metadata: { email: createUserDto.email }
-            });
-            throw error;
-        }
+        const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+        const userData = {
+            ...createUserDto,
+            password: hashedPassword,
+        };
+        return this.userRepository.create(userData);
     }
     async findAll() {
-        this.loggerService.logDatabase('Fetching all users', { action: 'find_all_users' });
         return this.userRepository.findAll();
     }
     async findAllWithPagination(page, limit) {
-        this.loggerService.logDatabase('Fetching users with pagination', {
-            action: 'find_users_paginated',
-            metadata: { page, limit }
-        });
         return this.userRepository.findAllWithPagination(page, limit);
     }
     async findById(id) {
-        this.loggerService.logDatabase('Finding user by ID', {
-            action: 'find_user_by_id',
-            metadata: { userId: id }
-        });
-        try {
-            const user = await this.userRepository.findById(id);
-            if (!user) {
-                this.loggerService.logValidation('User not found', {
-                    action: 'find_user_by_id',
-                    metadata: { userId: id }
-                });
-                throw new common_1.NotFoundException('User not found');
-            }
-            return user;
+        const user = await this.userRepository.findById(id);
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
         }
-        catch (error) {
-            this.loggerService.logSystemError('Error finding user by ID', error, {
-                action: 'find_user_by_id',
-                metadata: { userId: id }
-            });
-            throw error;
-        }
+        return user;
     }
     async findByEmail(email) {
-        this.loggerService.debug('Finding user by email', {
-            action: 'find_user_by_email',
-            metadata: { email }
-        });
         return this.userRepository.findByEmail(email);
     }
     async update(id, updateUserDto) {
-        this.loggerService.logDatabase('Updating user', {
-            userId: id,
-            action: 'update_user',
-            metadata: { updateFields: Object.keys(updateUserDto) }
-        });
-        try {
-            await this.findById(id);
-            if (updateUserDto.password) {
-                updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
-                this.loggerService.logAuth('User password updated', {
-                    userId: id,
-                    action: 'update_password'
-                });
-            }
-            const user = await this.userRepository.update(id, updateUserDto);
-            this.loggerService.logDatabase('User updated successfully', {
-                userId: id,
-                action: 'update_user'
-            });
-            this.loggerService.logUserAction('update_profile', id, 'user_account', {
-                updatedFields: Object.keys(updateUserDto)
-            });
-            return user;
+        await this.findById(id);
+        if (updateUserDto.password) {
+            updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
         }
-        catch (error) {
-            this.loggerService.logSystemError('User update failed', error, {
-                userId: id,
-                action: 'update_user'
-            });
-            throw error;
-        }
+        return this.userRepository.update(id, updateUserDto);
     }
     async remove(id) {
-        this.loggerService.logDatabase('Deleting user', {
-            userId: id,
-            action: 'delete_user'
-        });
-        try {
-            await this.findById(id);
-            await this.userRepository.delete(id);
-            this.loggerService.logDatabase('User deleted successfully', {
-                userId: id,
-                action: 'delete_user'
-            });
-            this.loggerService.logUserAction('delete_account', id, 'user_account');
-        }
-        catch (error) {
-            this.loggerService.logSystemError('User deletion failed', error, {
-                userId: id,
-                action: 'delete_user'
-            });
-            throw error;
-        }
+        await this.findById(id);
+        await this.userRepository.delete(id);
     }
 };
 exports.UsersService = UsersService;
+__decorate([
+    (0, log_decorator_1.Log)({
+        action: 'create_user',
+        extractContext: {
+            fromArgs: log_decorator_1.LogExtractors.emailFromDto,
+            fromResult: log_decorator_1.LogExtractors.userFromResult,
+            fromError: log_decorator_1.LogExtractors.emailFromError,
+        },
+        messages: {
+            start: 'Creating new user',
+            success: 'User created successfully',
+            error: 'User creation failed',
+        }
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto]),
+    __metadata("design:returntype", Promise)
+], UsersService.prototype, "create", null);
+__decorate([
+    (0, log_decorator_1.Log)({
+        action: 'find_all_users',
+        messages: {
+            start: 'Fetching all users',
+            success: 'All users fetched successfully',
+        }
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], UsersService.prototype, "findAll", null);
+__decorate([
+    (0, log_decorator_1.Log)({
+        action: 'find_users_paginated',
+        extractContext: {
+            fromArgs: (args) => ({ page: args[0], limit: args[1] }),
+        },
+        messages: {
+            start: 'Fetching users with pagination',
+            success: 'Paginated users fetched successfully',
+        }
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", Promise)
+], UsersService.prototype, "findAllWithPagination", null);
+__decorate([
+    (0, log_decorator_1.Log)({
+        action: 'find_user_by_id',
+        extractContext: {
+            fromArgs: log_decorator_1.LogExtractors.userIdFromArgs,
+            fromResult: log_decorator_1.LogExtractors.userFromResult,
+        },
+        messages: {
+            start: 'Finding user by ID',
+            success: 'User found successfully',
+            error: 'User not found',
+        }
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersService.prototype, "findById", null);
+__decorate([
+    (0, log_decorator_1.LogDebug)('find_user_by_email'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersService.prototype, "findByEmail", null);
+__decorate([
+    (0, log_decorator_1.Log)({
+        action: 'update_user',
+        extractContext: {
+            fromArgs: (args) => ({
+                userId: args[0],
+                updateFields: Object.keys(args[1] || {})
+            }),
+            fromResult: log_decorator_1.LogExtractors.userFromResult,
+        },
+        messages: {
+            start: 'Updating user',
+            success: 'User updated successfully',
+            error: 'User update failed',
+        }
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_user_dto_1.UpdateUserDto]),
+    __metadata("design:returntype", Promise)
+], UsersService.prototype, "update", null);
+__decorate([
+    (0, log_decorator_1.Log)({
+        action: 'delete_user',
+        extractContext: {
+            fromArgs: log_decorator_1.LogExtractors.userIdFromArgs,
+        },
+        messages: {
+            start: 'Deleting user',
+            success: 'User deleted successfully',
+            error: 'User deletion failed',
+        }
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersService.prototype, "remove", null);
 exports.UsersService = UsersService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [user_repository_1.UserRepository,

@@ -13,6 +13,9 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const users_service_1 = require("../users/users.service");
+const login_dto_1 = require("./dto/login.dto");
+const register_dto_1 = require("./dto/register.dto");
+const log_decorator_1 = require("../common/decorators/log.decorator");
 const logger_service_1 = require("../common/services/logger.service");
 const bcrypt = require("bcryptjs");
 let AuthService = class AuthService {
@@ -25,86 +28,29 @@ let AuthService = class AuthService {
         this.loggerService = loggerService;
     }
     async register(registerDto) {
-        this.loggerService.logAuth('Registration attempt started', {
-            action: 'register',
-            metadata: { email: registerDto.email, name: registerDto.name }
-        });
-        try {
-            const user = await this.usersService.create(registerDto);
-            const payload = { sub: user.id, email: user.email };
-            this.loggerService.logAuth('User registered successfully', {
-                userId: user.id,
-                action: 'register',
-                metadata: { email: user.email }
-            });
-            this.loggerService.logUserAction('register', user.id, 'user_account', {
-                email: user.email,
-                name: user.name
-            });
-            return {
-                access_token: this.jwtService.sign(payload),
-                user: this.excludePassword(user),
-            };
-        }
-        catch (error) {
-            this.loggerService.logBusinessError('Registration failed', {
-                action: 'register',
-                metadata: { email: registerDto.email, error: error.message }
-            });
-            throw error;
-        }
+        const user = await this.usersService.create(registerDto);
+        const payload = { sub: user.id, email: user.email };
+        return {
+            access_token: this.jwtService.sign(payload),
+            user: this.excludePassword(user),
+        };
     }
     async login(loginDto) {
-        this.loggerService.logAuth('Login attempt started', {
-            action: 'login',
-            metadata: { email: loginDto.email }
-        });
-        try {
-            const user = await this.validateUser(loginDto.email, loginDto.password);
-            if (!user) {
-                this.loggerService.logValidation('Invalid credentials provided', {
-                    action: 'login',
-                    metadata: { email: loginDto.email }
-                });
-                throw new common_1.UnauthorizedException('Invalid email or password');
-            }
-            const payload = { sub: user.id, email: user.email };
-            this.loggerService.logAuth('User logged in successfully', {
-                userId: user.id,
-                action: 'login',
-                metadata: { email: user.email }
-            });
-            this.loggerService.logUserAction('login', user.id, 'user_session');
-            return {
-                access_token: this.jwtService.sign(payload),
-                user: this.excludePassword(user),
-            };
+        const user = await this.validateUser(loginDto.email, loginDto.password);
+        if (!user) {
+            throw new common_1.UnauthorizedException('Invalid email or password');
         }
-        catch (error) {
-            this.loggerService.logBusinessError('Login failed', {
-                action: 'login',
-                metadata: { email: loginDto.email, error: error.message }
-            });
-            throw error;
-        }
+        const payload = { sub: user.id, email: user.email };
+        return {
+            access_token: this.jwtService.sign(payload),
+            user: this.excludePassword(user),
+        };
     }
     async validateUser(email, password) {
-        this.loggerService.debug('Validating user credentials', {
-            action: 'validate_user',
-            metadata: { email }
-        });
         const user = await this.usersService.findByEmail(email);
         if (user && (await bcrypt.compare(password, user.password))) {
-            this.loggerService.debug('User credentials validated successfully', {
-                userId: user.id,
-                action: 'validate_user'
-            });
             return user;
         }
-        this.loggerService.debug('User credentials validation failed', {
-            action: 'validate_user',
-            metadata: { email }
-        });
         return null;
     }
     excludePassword(user) {
@@ -113,6 +59,58 @@ let AuthService = class AuthService {
     }
 };
 exports.AuthService = AuthService;
+__decorate([
+    (0, log_decorator_1.Log)({
+        action: 'register',
+        extractContext: {
+            fromArgs: log_decorator_1.LogExtractors.emailFromDto,
+            fromResult: (result) => ({
+                userId: result.user.id,
+                email: result.user.email,
+                name: result.user.name,
+            }),
+            fromError: log_decorator_1.LogExtractors.emailFromError,
+        },
+        messages: {
+            start: 'Registration attempt started',
+            success: 'User registered successfully',
+            error: 'Registration failed',
+        }
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [register_dto_1.RegisterDto]),
+    __metadata("design:returntype", Promise)
+], AuthService.prototype, "register", null);
+__decorate([
+    (0, log_decorator_1.Log)({
+        action: 'login',
+        extractContext: {
+            fromArgs: (args) => ({ email: args[0]?.email }),
+            fromResult: (result) => ({
+                userId: result.user.id,
+                email: result.user.email,
+            }),
+            fromError: (error, args) => ({
+                email: args[0]?.email,
+                errorMessage: error.message,
+            }),
+        },
+        messages: {
+            start: 'Login attempt started',
+            success: 'User logged in successfully',
+            error: 'Login failed',
+        }
+    }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [login_dto_1.LoginDto]),
+    __metadata("design:returntype", Promise)
+], AuthService.prototype, "login", null);
+__decorate([
+    (0, log_decorator_1.LogDebug)('validate_user'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AuthService.prototype, "validateUser", null);
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [users_service_1.UsersService,
